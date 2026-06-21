@@ -1,8 +1,8 @@
-# RelationshipChat App — Architecture & Product Plan
+# Chat App — Architecture & Product Plan
 
 ## Overview
 
-A private, self-hosted chat application designed primarily for people to resolve  issues through structured conversations, with support for general chat as well. Runs locally via Docker, access controlled via IP whitelisting.
+A private, self-hosted chat application designed primarily for resolving issues through structured conversations, with support for general chat as well. Runs locally via Docker, access controlled via IP whitelisting.
 
 ---
 
@@ -10,34 +10,34 @@ A private, self-hosted chat application designed primarily for people to resolve
 
 Two modes of interaction:
 1. **Issue Resolution Mode** — structured flow: raise issue → discuss → resolve/close
-2. **General Chat Mode** — normal real-time messaging between users/couples
+2. **General Chat Mode** — normal real-time messaging between users
 
 ---
 
 ## User Flows
 
-### Couple / User Setup
+### User Setup
 - Register with name + email
-- Create or join a "relationship space" (a private room linking two users)
+- Create or join a "space" (a private room shared by its members)
 - Only whitelisted IPs can access the app
 
 ### Issue Flow
 ```
-One partner raises an issue
+A member raises an issue
         ↓
 Issue listed on shared dashboard (title, category, priority, date)
         ↓
-Both partners enter the issue's conversation thread
+Members enter the issue's conversation thread
         ↓
-They discuss, optionally get AI-assisted mediation prompts
+They discuss, optionally get AI-assisted suggestions
         ↓
-Either partner marks issue as Resolved / Needs More Time / Escalated
+A member marks issue as Resolved / Needs More Time / Escalated
         ↓
 Issue archived with resolution summary
 ```
 
 ### General Chat Flow
-- Standard real-time messaging within their relationship space
+- Standard real-time messaging within their space
 - Supports text, emoji, images (optional)
 
 ---
@@ -46,17 +46,16 @@ Issue archived with resolution summary
 
 ### Must-Have (MVP)
 - [ ] User auth (email + password, JWT)
-- [ ] Couple pairing (invite via link or code)
+- [ ] Member pairing (invite via link or code)
 - [ ] Issue tracker: create, list, filter by status (Open / In Progress / Resolved)
 - [ ] Per-issue conversation thread (real-time chat)
-- [ ] General chat channel per relationship space
+- [ ] General chat channel per space
 - [ ] Issue resolution: mark resolved with a short summary note
 - [ ] IP whitelisting middleware
 
 ### Nice-to-Have (Post-MVP)
-- [ ] AI mediation suggestions inside issue threads (using Claude API)
-- [ ] Mood check-in (daily prompt: "How are you feeling today?")
-- [ ] Issue categories (Communication, Trust, Finance, Intimacy, etc.)
+- [ ] AI-assisted suggestions inside issue threads (using Claude API)
+- [ ] Issue categories (Bug, Feature, Process, Communication, etc.)
 - [ ] Resolution history & stats ("12 issues resolved this month")
 - [ ] Notifications (in-app or email)
 - [ ] Image/file sharing in chat
@@ -103,11 +102,11 @@ Issue archived with resolution summary
 users
   id, email, password_hash, name, created_at
 
-relationship_spaces
+spaces
   id, name, created_at
 
 space_members
-  space_id, user_id, role (owner/partner), joined_at
+  space_id, user_id, role (owner/member), joined_at
 
 issues
   id, space_id, raised_by, title, description
@@ -132,7 +131,7 @@ POST   /auth/register
 POST   /auth/login
 GET    /auth/me
 
-POST   /spaces                    — create relationship space
+POST   /spaces                    — create space
 GET    /spaces/:id                — get space details
 POST   /spaces/:id/invite         — generate invite link
 
@@ -157,7 +156,7 @@ DELETE /admin/ip-whitelist/:id    — remove IP
 ### Layout
 ```
 ┌─────────────────────────────────────────────────┐
-│  Header: Space name | Partner online indicator  │
+│  Header: Space name | Members online indicator  │
 ├──────────────┬──────────────────────────────────┤
 │              │                                  │
 │  Sidebar     │   Main Content Area              │
@@ -181,12 +180,11 @@ DELETE /admin/ip-whitelist/:id    — remove IP
 4. **Issue Thread** — chat thread with issue header showing title, status, priority
    - "Mark Resolved" button with a resolution note input
 5. **Issue Creation Modal** — title, description, category, priority
-6. **Settings** — profile, partner info, IP whitelist (admin)
+6. **Settings** — profile, member info, IP whitelist (admin)
 
 ### UX Principles
-- Calm, neutral color palette — this is an emotionally sensitive app
-- No aggressive colors or gamification
-- Resolution feels like a shared achievement (subtle confirmation animation)
+- Clean, neutral color palette
+- Resolution gives clear confirmation feedback
 - Mobile-responsive (even though it's local, could be on phone via local network)
 
 ---
@@ -257,7 +255,7 @@ app/
 1. ✅ Folder structure created
 2. ⬜ Docker Compose skeleton + Postgres + Redis running
 3. ⬜ Backend: auth (register/login/JWT)
-4. ⬜ Backend: relationship spaces + pairing
+4. ⬜ Backend: spaces + pairing
 5. ⬜ Backend: issue CRUD
 6. ⬜ Backend: WebSocket for general chat
 7. ⬜ Backend: WebSocket for issue threads
@@ -266,7 +264,7 @@ app/
 10. ⬜ Frontend: issue dashboard + thread UI
 11. ⬜ IP whitelist middleware
 12. ⬜ Polish + mobile responsiveness
-13. ⬜ (Optional) AI mediation via Claude API in issue threads
+13. ⬜ (Optional) AI-assisted suggestions via Claude API in issue threads
 
 ---
 
@@ -280,4 +278,4 @@ app/
 | Frontend UI | Medium–High |
 | Docker setup | Low |
 | IP whitelisting | Low |
-| AI mediation (optional) | Low (API call) |
+| AI suggestions (optional) | Low (API call) |
