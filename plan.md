@@ -100,13 +100,15 @@ Issue archived with resolution summary
 
 ```
 users
-  id, email, password_hash, name, created_at
+  id, email, password_hash, name, role (admin/member), created_at
 
 spaces
   id, name, created_at
 
 space_members
   space_id, user_id, role (owner/member), joined_at
+  # Note: this role is per-space (owner/member of a given space),
+  # distinct from users.role (global admin/member across the whole app)
 
 issues
   id, space_id, raised_by, title, description
@@ -147,6 +149,9 @@ WS     /ws/issues/:iid            — issue thread socket
 GET    /admin/ip-whitelist        — list whitelisted IPs
 POST   /admin/ip-whitelist        — add IP
 DELETE /admin/ip-whitelist/:id    — remove IP
+
+GET    /admin/users               — list all users (admin only)
+DELETE /admin/users/:id           — remove a user (admin only)
 ```
 
 ---

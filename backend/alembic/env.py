@@ -12,12 +12,15 @@ import app.models  # noqa: F401  ensures all model files are imported
 # Alembic Config object, provides access to values in alembic.ini.
 config = context.config
 
+##strip async part from db url 
+db_url = os.environ["DATABASE_URL"].replace("+asyncpg","")
+config.set_main_option("sqlalchemy.url",db_url)
 # Interpret the config file for Python logging.
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 # Read DATABASE_URL from the environment — never from alembic.ini.
-config.set_main_option("sqlalchemy.url", os.environ["DATABASE_URL"])
+# config.set_main_option("sqlalchemy.url", os.environ["DATABASE_URL"])
 
 # Metadata Alembic diffs against to detect schema changes.
 target_metadata = Base.metadata

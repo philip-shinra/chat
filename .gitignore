@@ -32,6 +32,9 @@ yarn-error.log*
 # Docker
 *.pid
 
+# Postgres data directory (bind-mounted, local only)
+data/db_data/
+
 # OS / editor
 .DS_Store
 Thumbs.db
