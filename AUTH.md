@@ -1,6 +1,6 @@
 # Auth Implementation — Step by Step
 
-Goal: `POST /auth/register`, `POST /auth/login`, `GET /auth/me`, backed by the `users` table that already exists (`id`, `name`, `email`, `password_hash`, `created_at`). Also covers a global `role` (admin/member) on `users`, plus admin-only endpoints to list and remove users (Step 10).
+Goal: `POST /auth/register`, `POST /auth/login`, `GET /auth/me`, backed by the `users` table that already exists (`id`, `name`, `email`, `password_hash`, `created_at`). Also covers a global `role` (admin/member) on `users`, plus admin-only endpoints to list and remove users (Step 11).
 
 Note: this `role` is global (platform-wide admin vs. member) — different from the per-space `owner`/`member` role planned for `space_members` later. Don't conflate the two.
 
@@ -349,7 +349,7 @@ curl http://localhost:8080/auth/me -H "Authorization: Bearer TOKEN"
 
 ## Step 11 — Global admin role + admin user-management endpoints
 
-### 10a. Add `role` to the `User` model
+### 11a. Add `role` to the `User` model
 
 **`backend/app/models/models.py`** — add a `role` column, defaulting new users to `"member"`:
 
@@ -357,7 +357,7 @@ curl http://localhost:8080/auth/me -H "Authorization: Bearer TOKEN"
 role: Mapped[str] = mapped_column(String(20), server_default="member", nullable=False)
 ```
 
-### 10b. Generate + apply the migration
+### 11b. Generate + apply the migration
 
 ```bash
 docker compose run --rm migrate alembic revision --autogenerate -m "add role to users"
@@ -369,7 +369,7 @@ Open the generated file and check it only adds the `role` column (with the serve
 docker compose run --rm migrate alembic upgrade head
 ```
 
-### 10c. Update schemas
+### 11c. Update schemas
 
 **`backend/app/schemas/user.py`** — add `role` to `UserOut` so it's visible in responses (never add it to `UserCreate` — a user should never be able to set their own role at registration):
 
@@ -385,7 +385,7 @@ class UserOut(BaseModel):
         from_attributes = True
 ```
 
-### 10d. Admin-only dependency
+### 11d. Admin-only dependency
 
 **`backend/app/routers/auth.py`** — add this below `get_current_user` (reuses it):
 
@@ -396,7 +396,7 @@ async def require_admin(current_user: User = Depends(get_current_user)) -> User:
     return current_user
 ```
 
-### 10e. Admin router
+### 11e. Admin router
 
 **`backend/app/routers/admin.py`** (new file) — thin again, calls `user_service.list_users`/`user_service.delete_user` from Step 7 (which already handles the "can't delete yourself" rule):
 
@@ -429,7 +429,7 @@ from app.routers.admin import router as admin_router
 app.include_router(admin_router)
 ```
 
-### 10f. Promote your first admin manually
+### 11f. Promote your first admin manually
 
 There's no endpoint to self-promote to admin (by design — an unauthenticated user shouldn't be able to grant themselves admin). After registering your first user, promote it directly in Postgres:
 
@@ -438,7 +438,7 @@ psql -h localhost -p 5432 -U postgres -d postgres \
   -c "UPDATE users SET role = 'admin' WHERE email = 'alice@example.com';"
 ```
 
-### 10g. Test
+### 11g. Test
 
 ```bash
 # login as the admin user to get a token, then:
@@ -455,9 +455,9 @@ curl -X DELETE http://localhost:8080/admin/users/2 -H "Authorization: Bearer TOK
 
 - `password_hash` should never appear in `UserOut` or any response — it doesn't, since `UserOut` simply doesn't declare that field.
 - `JWT_SECRET_KEY` must be a real secret in `.env` (not committed) — never reuse `postgres`/`postgres` style placeholder values for this one, it's what signs your tokens.
-- No new Alembic migration needed for Steps 1-9 — you're not changing the `users` table there, only adding application code around it. Step 10 does need one, for the new `role` column.
-- `role` must never be settable via `UserCreate` — only change it through direct DB access (10f) or, later, an existing-admin-only endpoint if you build one.
-- An admin should not be able to delete their own account via the API (handled in 10e) — otherwise a single admin could lock everyone (including themselves) out.
+- No new Alembic migration needed for Steps 1-10 — you're not changing the `users` table there, only adding application code around it. Step 11 does need one, for the new `role` column.
+- `role` must never be settable via `UserCreate` — only change it through direct DB access (11f) or, later, an existing-admin-only endpoint if you build one.
+- An admin should not be able to delete their own account via the API (handled in 11e) — otherwise a single admin could lock everyone (including themselves) out.
 - Everything touching `db` must be async end-to-end: `async def` route/dependency, `AsyncSession` type hint, `await` on every `db.scalar/get/commit/refresh/delete` call. Mixing a sync call into an async session (or vice versa) raises an error immediately — there's no silent partial-async state.
 - `alembic/env.py` intentionally stays on the sync driver (`psycopg2`, with `+asyncpg` stripped from the URL) — don't try to make Alembic async too; the `migrate` service runs independently from the app and doesn't need it.
 - Routers (`auth.py`, `admin.py`) should never call `db.scalar`/`db.get`/`db.commit` directly — that logic lives in `services/user_service.py` (Step 7). If a route starts writing SQL/ORM queries directly, that's a signal it belongs in the service layer instead.
