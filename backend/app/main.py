@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from app.routers.health import router as health_router
+from app.routers.user import router as user_router
 import uvicorn
 
 app = FastAPI(
@@ -7,6 +8,7 @@ app = FastAPI(
 )
 
 app.include_router(health_router)
+app.include_router(user_router,tags=["Users"])
 
 if __name__== "__main__":
     uvicorn.run(

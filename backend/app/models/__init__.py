@@ -1,1 +1,1 @@
-from .models import User  # noqa: F401
+from .db_models import User  # noqa: F401
