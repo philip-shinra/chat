@@ -77,3 +77,20 @@ async def get_current_user(db:AsyncSession=Depends(get_db), credentials:HTTPAuth
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
 
     return user
+
+async def get_current_user_ws(token:str, db:AsyncSession=Depends(get_db)):
+    try:
+
+        payload = decode_token(token)
+    except HTTPException:
+        raise ValueError("Invalid or expired token")
+    
+    user_id = payload.get("sub")
+
+    if user_id is None:
+        raise ValueError("Invalid token")
+
+    user = await db.get(User, int(user_id))
+    if user is None:
+        raise ValueError("User not found")
+    return user

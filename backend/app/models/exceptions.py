@@ -1,0 +1,2 @@
+class NotSpaceMemberError(Exception):
+    pass

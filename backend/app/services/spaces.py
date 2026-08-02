@@ -1,4 +1,9 @@
-from app.models.db_models import Space, SpaceMember
+from app.models.db_models import Space, SpaceMember, User
+from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
+from fastapi import HTTPException
+from sqlalchemy.ext.asyncio import AsyncSession
+
 import secrets
 
 async def create_space_service(db,payload,current_user):
@@ -25,3 +30,42 @@ async def create_space_service(db,payload,current_user):
         "name":space.name,
         "invite_code":space.invite_code
     }
+
+
+async def join_space_invite_code(db:AsyncSession,invite_code:str,current_user:User):
+    """
+    add users using invite code
+    """
+    stmt = select(Space).where(Space.invite_code==invite_code)
+    result = await db.execute(stmt)
+
+    space = result.scalar_one_or_none()
+
+    if space is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Invalid invite code",
+        )
+
+    new_member = SpaceMember(
+        space_id=space.id,
+        user_id=current_user.id,
+        role="member"
+    )
+
+    try:
+        db.add(new_member)
+        await db.commit()
+
+    except IntegrityError as e:
+        await db.rollback()
+        raise HTTPException(
+            status_code=400,
+            detail="User is already a member of this space"
+        )
+
+    return {
+        "message": "Successfully joined the space",
+        "space_id": space.id,
+    }
+
