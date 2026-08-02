@@ -23,3 +23,18 @@ class MessageCreate(BaseModel):
     content: str
     message_type: str = "text"
     reply_to_message_id: Optional[uuid.UUID] = None
+
+class MessageFilter(BaseModel):
+    after: Optional[datetime] = None
+    before: Optional[datetime] = None
+    sender_user_id: Optional[int] = None
+    message_type: Optional[str] = None
+    limit: int = 50
+
+class UserOut(BaseModel):
+    id: int
+    name: str
+    email: EmailStr
+
+    class Config:
+        from_attributes = True

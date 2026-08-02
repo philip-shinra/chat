@@ -69,3 +69,24 @@ async def join_space_invite_code(db:AsyncSession,invite_code:str,current_user:Us
         "space_id": space.id,
     }
 
+async def get_spaces_by_user(user: User, db: AsyncSession):
+    stmt = (
+        select(Space)
+        .join(SpaceMember, SpaceMember.space_id == Space.id)
+        .where(SpaceMember.user_id == user.id)
+        .order_by(Space.created_at.desc())
+    )
+    result = await db.execute(stmt)
+    spaces = result.scalars().all()
+
+    return [
+        {
+            "id": space.id,
+            "name": space.name,
+            "invite_code": space.invite_code,
+            "created_at": space.created_at,
+        }
+        for space in spaces
+    ]
+
+

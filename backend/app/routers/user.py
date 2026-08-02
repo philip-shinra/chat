@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from ..core.database import get_db
-from app.models.response import UserCreate, UserLogin
-from app.services.user_service import create_user, login_token
+from app.models.response import UserCreate, UserLogin, UserOut
+from app.services.user_service import create_user, login_token, get_current_user
 from fastapi import HTTPException
 
 router =APIRouter()
@@ -32,6 +32,10 @@ async def login(login_cred:UserLogin,db=Depends(get_db)):
             status_code=401,
             detail=str(e)
         )
+
+@router.get("/me", response_model=UserOut)
+async def me(user_detail=Depends(get_current_user)):
+    return user_detail
 
 
 

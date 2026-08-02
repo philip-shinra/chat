@@ -2,7 +2,7 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends
 from pydantic import ValidationError
 from app.core.database import get_db
 from app.services.user_service import get_current_user_ws
-from app.services.messages import create_messages, _assert_is_mem
+from app.services.messages import create_messages, _assert_is_mem, serialize_message
 from app.models.exceptions import NotSpaceMemberError
 from app.websockets.manager import manager
 from app.models.response import MessageCreate
@@ -33,14 +33,10 @@ async def space_chat(websocket: WebSocket, space_id: int, token: str, db=Depends
                 await websocket.close(code=4403)
                 break
 
-            await manager.broadcast(space_id, {
-                "id": str(message.id),
-                "space_id": message.space_id,
-                "sender_user_id": message.sender_user_id,
-                "content": message.content,
-                "reply_to_message_id": str(message.reply_to_message_id) if message.reply_to_message_id else None,
-                "created_at": message.created_at.isoformat(),
-            })
+            await manager.broadcast(
+                space_id,
+                serialize_message(message, current_user.name),
+            )
     except WebSocketDisconnect:
         pass
     finally:
